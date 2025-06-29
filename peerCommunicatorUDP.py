@@ -140,7 +140,7 @@ class DeliveryThread(threading.Thread):
                         
                         #Apenas responde se a mensagem seja de 'DATA' e não de 'DATA_ANS'
                         if len(payload) == 2 and sender_of_data != myself:
-                            time.sleep(random.randrange(10, 100) / 1000.0) 
+                            time.sleep(random.randrange(50, 100) / 100.0) 
                             payload_content = (myself, num_msgs,sender_of_data, original_msg_number) 
                             num_msgs += 1
                             current_ts_tuple = None
@@ -320,7 +320,7 @@ def send_application_messages(num_messages):
     global lamport_clock, myself, PEERS_ADDRESSES, message_buffer, num_msgs
     
     for msg_num in range(num_messages):
-        time.sleep(random.randrange(10, 100) / 1000.0) 
+        time.sleep(random.randrange(50, 100) / 100.0) 
         
         payload_content = (myself, num_msgs) 
         num_msgs += 1
