@@ -381,8 +381,7 @@ class MsgHandler(threading.Thread):
                     
                     # Ao receber ACK:
                     with clock_lock:
-                        lamport_clock = max(lamport_clock, recv_msg_unpickled['timestamp'][0]) + 1
-                    # Não incremente novamente ao processar o ACK!
+                        lamport_clock = max(lamport_clock, recv_msg_unpickled['timestamp'][0])
                     
                     with buffer_lock:
                         added = False
