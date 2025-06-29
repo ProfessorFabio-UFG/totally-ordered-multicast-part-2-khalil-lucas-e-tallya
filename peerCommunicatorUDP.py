@@ -287,8 +287,7 @@ def send_application_messages(num_messages):
 
         my_ip = get_my_public_ip()
         for peer_ip in PEERS_ADDRESSES:
-            if peer_ip != my_ip: 
-                 sendSocket.sendto(data_msg_packed_for_send, (peer_ip, PEER_UDP_PORT))
+            sendSocket.sendto(data_msg_packed_for_send, (peer_ip, PEER_UDP_PORT))
 
 def waitToStart():
     """
