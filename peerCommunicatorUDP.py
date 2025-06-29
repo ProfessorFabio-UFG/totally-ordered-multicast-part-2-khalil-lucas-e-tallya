@@ -379,10 +379,6 @@ class MsgHandler(threading.Thread):
                     ack_sender = recv_msg_unpickled['ack_sender_id']
                     print(f"ACK recebido de {ack_sender} referente à mensagem com relógio {orig_data_ts[0]}")
                     
-                    # Ao receber ACK:
-                    with clock_lock:
-                        lamport_clock = max(lamport_clock, recv_msg_unpickled['timestamp'][0])
-                    
                     with buffer_lock:
                         added = False
                         for i, item_tuple in enumerate(message_buffer):
