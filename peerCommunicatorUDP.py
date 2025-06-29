@@ -252,7 +252,7 @@ def send_application_messages(num_messages):
     """
     Envia um número especificado de mensagens DATA para o grupo.
     """
-    global lamport_clock, myself, PEERS_ADDRESSES, message_buffer
+    global lamport_clock, myself, PEERS_ADDRESSES, message_buffer, num_msgs
     
     for msg_num in range(num_messages):
         time.sleep(random.randrange(10, 100) / 1000.0) 
