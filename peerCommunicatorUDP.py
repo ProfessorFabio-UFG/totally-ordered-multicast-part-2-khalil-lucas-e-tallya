@@ -54,7 +54,7 @@ def getListOfPeers():
   clientSock.send(msg)
   msg = clientSock.recv(2048)
   PEERS = pickle.loads(msg)
-  print ('Got list of peers: ', PEERS)
+  #print ('Got list of peers: ', PEERS)
   clientSock.close()
   return PEERS
 
@@ -105,8 +105,6 @@ class MsgHandler(threading.Thread):
         responsePack = pickle.dumps(response)
         for addrToSend in PEERS:
           sendSocket.sendto(responsePack, (addrToSend, PEER_UDP_PORT))
-      else:
-        print(f'Mensagem desconhecida: {msg}')
 
     # Write log file
     logFile = open('logfile'+str(myself)+'.log', 'w')
