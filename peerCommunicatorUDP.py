@@ -29,7 +29,7 @@ serverSock.listen(1)
 
 def get_public_ip():
   ipAddr = get('https://api.ipify.org').content.decode('utf8')
-  print('My public IP address is: {}'.format(ipAddr))
+  #print('My public IP address is: {}'.format(ipAddr))
   return ipAddr
 
 # Function to register this peer with the group manager
@@ -46,11 +46,11 @@ def registerWithGroupManager():
 
 def getListOfPeers():
   clientSock = socket(AF_INET, SOCK_STREAM)
-  print ('Connecting to group manager: ', (GROUPMNGR_ADDR,GROUPMNGR_TCP_PORT))
+  #print ('Connecting to group manager: ', (GROUPMNGR_ADDR,GROUPMNGR_TCP_PORT))
   clientSock.connect((GROUPMNGR_ADDR,GROUPMNGR_TCP_PORT))
   req = {"op":"list"}
   msg = pickle.dumps(req)
-  print ('Getting list of peers from group manager: ', req)
+  #print ('Getting list of peers from group manager: ', req)
   clientSock.send(msg)
   msg = clientSock.recv(2048)
   PEERS = pickle.loads(msg)
@@ -64,7 +64,7 @@ class MsgHandler(threading.Thread):
     self.sock = sock
 
   def run(self):
-    print('Handler is ready. Waiting for the handshakes...')
+    #print('Handler is ready. Waiting for the handshakes...')
     
     #global handShakes
     global handShakeCount
@@ -78,7 +78,7 @@ class MsgHandler(threading.Thread):
       msg = pickle.loads(msgPack)
       if msg[0] == 'READY':
         handShakeCount += 1
-        print('--- Handshake received: ', msg[1])
+        #print('--- Handshake received: ', msg[1])
 
     print('Secondary Thread: Received all handshakes. Entering the loop to receive messages.')
 
@@ -94,10 +94,10 @@ class MsgHandler(threading.Thread):
           break
       # Mensagem de resposta (broadcast)
       elif len(msg) == 4:
-        print(f'Resposta recebida: {msg}')
+        print(f'Mensagem {msg[1]} do Processo {msg[0]}, em resposta à Mensagem {msg[2]} do Processo {msg[3]}.')
       # Mensagem normal
       elif len(msg) == 2 and msg[0] != myself:
-        print(f'Nó {myself} recebeu mensagem de {msg[0]}: {msg}')
+        print(f'Nó {myself}: Mensagem {msg[1]} do Processo {msg[0]}.')
         logList.append(msg)
         # Envia resposta em broadcast
         msgs += 1
