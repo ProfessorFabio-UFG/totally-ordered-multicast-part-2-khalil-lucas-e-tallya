@@ -153,8 +153,7 @@ class DeliveryThread(threading.Thread):
                         }
                         data_msg_packed_for_send = pickle.dumps(data_msg_dict)
 
-                        with buffer_lock:
-                            message_buffer.append( (current_ts_tuple, myself, payload_content, set()) )
+                        message_buffer.append( (current_ts_tuple, myself, payload_content, set()) )
                         
                         print(f"DeliveryThread: Peer {myself} enviando MSG {num_msgs} (payload {payload_content}) com LC_TS {current_ts_tuple} em resposta a mensagem {original_msg_number} de {sender_of_data}")
 
