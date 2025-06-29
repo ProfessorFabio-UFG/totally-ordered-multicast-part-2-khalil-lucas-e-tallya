@@ -413,8 +413,8 @@ if __name__ == "__main__":
         send_application_messages(num_messages_to_send_by_me)
     
     # Cada peer envia 'num_messages_to_send_by_me'.
-    # Total de mensagens DATA no sistema = N * num_messages_to_send_by_me + uma resposta de cada peer para cada mensagem enviada
-    expected_total_delivered_messages = N * num_messages_to_send_by_me + (N-1) * num_messages_to_send_by_me
+    # Total de mensagens DATA no sistema = N * número de mensagens + uma resposta de cada peer para cada mensagem enviada vezes o total de peers, já que todos enviam a mesma quantidade de mensagens.
+    expected_total_delivered_messages = N * num_messages_to_send_by_me + ((N-1) * num_messages_to_send_by_me) * N
     
     print(f"Main: Aguardando todas as {expected_total_delivered_messages} mensagens serem entregues...")
     # Heurística para timeout: 2 segundos por mensagem esperada + 30s de folga
