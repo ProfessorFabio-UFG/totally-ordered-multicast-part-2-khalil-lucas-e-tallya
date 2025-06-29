@@ -139,7 +139,7 @@ class DeliveryThread(threading.Thread):
                         delivered_something_in_this_iteration = True
                         
                         #Apenas responde se a mensagem seja de 'DATA' e não de 'DATA_ANS'
-                        if len(payload) == 2:
+                        if len(payload) == 2 and sender_of_data != myself:
                             time.sleep(random.randrange(10, 100) / 1000.0) 
                             payload_content = (myself, num_msgs,sender_of_data, original_msg_number) 
                             num_msgs += 1
@@ -413,8 +413,8 @@ if __name__ == "__main__":
         send_application_messages(num_messages_to_send_by_me)
     
     # Cada peer envia 'num_messages_to_send_by_me'.
-    # Total de mensagens DATA no sistema = N * num_messages_to_send_by_me
-    expected_total_delivered_messages = N * num_messages_to_send_by_me 
+    # Total de mensagens DATA no sistema = N * num_messages_to_send_by_me + uma resposta de cada peer para cada mensagem enviada
+    expected_total_delivered_messages = N * num_messages_to_send_by_me + (N-1) * num_messages_to_send_by_me
     
     print(f"Main: Aguardando todas as {expected_total_delivered_messages} mensagens serem entregues...")
     # Heurística para timeout: 2 segundos por mensagem esperada + 30s de folga
