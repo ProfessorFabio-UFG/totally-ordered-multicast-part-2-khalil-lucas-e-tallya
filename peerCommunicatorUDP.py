@@ -216,7 +216,7 @@ class MsgHandler(threading.Thread):
                             new_message = (current_message[0], current_message[1], data_payload, current_message[3])
                             message_buffer[duplicate_index] = new_message
                         
-                        print(f"MsgHandler: Mensagem número {data_payload[1]} recebida do Processo {data_sender} com TimeStamp {data_ts}")
+                        print(f"MsgHandler: Mensagem número {data_payload[1]} recebida do Processo {data_sender} com Time Stamp {data_ts[0]}")
                     
                     with clock_lock:
                         lamport_clock += 1
@@ -341,7 +341,7 @@ def send_application_messages(num_messages):
         with buffer_lock:
             message_buffer.append( (current_ts_tuple, myself, payload_content, set()) )
         
-        print(f"Main: Processo {myself} enviando mensagem número {num_msgs} com Time Stamp {current_ts_tuple}.")
+        print(f"Main: Processo {myself} enviando mensagem número {num_msgs} com Time Stamp {current_ts_tuple[0]}.")
 
         my_ip = get_my_public_ip()
         for peer_ip in PEERS_ADDRESSES:
