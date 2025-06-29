@@ -135,7 +135,10 @@ class DeliveryThread(threading.Thread):
                         with log_list_lock:
                             logList.append( (sender_of_data, original_msg_number) )
                         
-                        print(f"DeliveryThread: Entregue MSG({delivered_msg_tuple_content[2]}) do Peer {sender_of_data} (ts: {msg_timestamp}). Tamanho do Log: {len(logList)}")
+                        if len(payload) == 2:
+                            print(f"DeliveryThread: Entregue mensagem {original_msg_number} do Processo {sender_of_data}. Tamanho do Log: {len(logList)}")
+                        else:
+                            print(f"DeliveryThread: Entregue mensagem {original_msg_number} do Processo {sender_of_data}, em resposta à mensagem {payload[3]} do Processo {payload[2]}. Tamanho do Log: {len(logList)}")
                         delivered_something_in_this_iteration = True
                         
                         #Apenas responde se a mensagem seja de 'DATA' e não de 'DATA_ANS'
@@ -157,8 +160,6 @@ class DeliveryThread(threading.Thread):
                             data_msg_packed_for_send = pickle.dumps(data_msg_dict)
 
                             message_buffer.append( (current_ts_tuple, myself, payload_content, set()) )
-                            
-                            print(f"DeliveryThread: Peer {myself} enviando MSG {num_msgs} (payload {payload_content}) com LC_TS {current_ts_tuple} em resposta a mensagem {original_msg_number} de {sender_of_data}")
 
                             my_ip = get_my_public_ip()
                             for peer_ip in PEERS_ADDRESSES:
@@ -215,7 +216,7 @@ class MsgHandler(threading.Thread):
                             new_message = (current_message[0], current_message[1], data_payload, current_message[3])
                             message_buffer[duplicate_index] = new_message
                         
-                        print(f"MsgHandler: MENSAGEM RECEBIDA de {data_sender} (payload: {data_payload}, ts: {data_ts})")
+                        print(f"MsgHandler: Mensagem número {data_payload[1]} recebida do Processo {data_sender} com TimeStamp {data_ts}")
                     
                     with clock_lock:
                         lamport_clock += 1
@@ -237,7 +238,7 @@ class MsgHandler(threading.Thread):
                     orig_data_ts = recv_msg_unpickled['original_data_timestamp']
                     orig_data_sender = recv_msg_unpickled['original_data_sender_id']
                     ack_sender = recv_msg_unpickled['ack_sender_id']
-                    print(f"ACK recebido de {ack_sender} referente à mensagem de {orig_data_sender} com relógio {orig_data_ts[0]}")
+                    #print(f"ACK recebido de {ack_sender} referente à mensagem de {orig_data_sender} com relógio {orig_data_ts[0]}")
                     
                     with buffer_lock:
                         added = False
@@ -275,7 +276,7 @@ class MsgHandler(threading.Thread):
                             new_message = (current_message[0], current_message[1], data_payload, current_message[3])
                             message_buffer[duplicate_index] = new_message
                         
-                        print(f"MsgHandler: MENSAGEM RECEBIDA de {data_sender} (payload: {data_payload}, ts: {data_ts})")
+                        print(f"MsgHandler: Mensagem número {data_payload[1]} recebida do Processo {data_sender}, em resposta à mensagem {data_payload[3]} do Processo {data_payload[2]} com TimeStamp {data_ts}")
                     
                     with clock_lock:
                         lamport_clock += 1
@@ -340,7 +341,7 @@ def send_application_messages(num_messages):
         with buffer_lock:
             message_buffer.append( (current_ts_tuple, myself, payload_content, set()) )
         
-        print(f"Main: Peer {myself} enviando MSG {num_msgs} (payload {payload_content}) com LC_TS {current_ts_tuple}")
+        print(f"Main: Processo {myself} enviando mensagem número {num_msgs} com Time Stamp {current_ts_tuple}.")
 
         my_ip = get_my_public_ip()
         for peer_ip in PEERS_ADDRESSES:
@@ -397,8 +398,8 @@ if __name__ == "__main__":
         exit(1)
 
     print(f"Main: Peer {myself} inicializado. Enviará {num_messages_to_send_by_me} mensagens.")
-    print(f"Main: Todos IPs dos peers: {PEERS_ADDRESSES}")
-    print(f"Main: Todos IDs dos peers assumidos: {ALL_PEER_IDS}") # [0, 1, ..., N-1]
+    #print(f"Main: Todos IPs dos peers: {PEERS_ADDRESSES}")
+    #print(f"Main: Todos IDs dos peers assumidos: {ALL_PEER_IDS}") # [0, 1, ..., N-1]
 
     msg_handler = MsgHandler(recvSocket)
     msg_handler.start()
