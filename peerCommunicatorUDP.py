@@ -93,7 +93,7 @@ class MsgHandler(threading.Thread):
         if stopCount == N:
           break
       # Mensagem de resposta (broadcast)
-      elif len(msg) == 4:
+      elif len(msg) == 4 and msg[0] != myself:
         print(f'Mensagem {msg[1]} do Processo {msg[0]}, em resposta à Mensagem {msg[2]} do Processo {msg[3]}.')
       # Mensagem normal
       elif len(msg) == 2 and msg[0] != myself:
