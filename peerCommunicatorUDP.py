@@ -45,7 +45,7 @@ def get_my_public_ip():
 
 def registerWithGroupManager():
     clientSock_gm = socket(AF_INET, SOCK_STREAM)
-   # print(f'Conectando ao gerenciador de grupo: {(GROUPMNGR_ADDR, GROUPMNGR_TCP_PORT)}')
+    print(f'Conectando ao gerenciador de grupo: {(GROUPMNGR_ADDR, GROUPMNGR_TCP_PORT)}')
     clientSock_gm.connect((GROUPMNGR_ADDR, GROUPMNGR_TCP_PORT))
     ipAddr = get_my_public_ip()
     # PEER_UDP_PORT para comunicação de dados
@@ -57,7 +57,7 @@ def registerWithGroupManager():
 
 def unregisterWithGroupManager():
     clientSock_gm = socket(AF_INET, SOCK_STREAM)
-    #print(f'Conectando ao gerenciador de grupo: {(GROUPMNGR_ADDR, GROUPMNGR_TCP_PORT)}')
+    print(f'Conectando ao gerenciador de grupo: {(GROUPMNGR_ADDR, GROUPMNGR_TCP_PORT)}')
     clientSock_gm.connect((GROUPMNGR_ADDR, GROUPMNGR_TCP_PORT))
     ipAddr = get_my_public_ip()
     # PEER_UDP_PORT para comunicação de dados
@@ -70,14 +70,14 @@ def unregisterWithGroupManager():
 def getListOfPeers():
     global PEERS_ADDRESSES, ALL_PEER_IDS
     clientSock_gm = socket(AF_INET, SOCK_STREAM)
-    #print(f'Obtendo lista de peers do gerenciador de grupo: {(GROUPMNGR_ADDR, GROUPMNGR_TCP_PORT)}')
+    print(f'Obtendo lista de peers do gerenciador de grupo: {(GROUPMNGR_ADDR, GROUPMNGR_TCP_PORT)}')
     clientSock_gm.connect((GROUPMNGR_ADDR, GROUPMNGR_TCP_PORT))
     req = {"op": "list"}
     msg = pickle.dumps(req)
     clientSock_gm.send(msg)
     msg_recv = clientSock_gm.recv(4096) 
     PEERS_ADDRESSES = pickle.loads(msg_recv)
-    #print(f'Obtida lista de IPs dos peers: {PEERS_ADDRESSES}')
+    print(f'Obtida lista de IPs dos peers: {PEERS_ADDRESSES}')
     clientSock_gm.close()
     
     if len(PEERS_ADDRESSES) != N:
