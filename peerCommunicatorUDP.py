@@ -10,6 +10,7 @@ from requests import get
 
 # Counter to make sure we have received handshakes from all other processes
 handShakeCount = 0
+msgs = 0
 
 PEERS = []
 
@@ -67,7 +68,7 @@ class MsgHandler(threading.Thread):
     
     #global handShakes
     global handShakeCount
-    
+    global msgs
     logList = []
     
     # Wait until handshakes are received from all other processes
@@ -75,29 +76,38 @@ class MsgHandler(threading.Thread):
     while handShakeCount < N:
       msgPack = self.sock.recv(1024)
       msg = pickle.loads(msgPack)
-      #print ('########## unpickled msgPack: ', msg)
       if msg[0] == 'READY':
-
-        # To do: send reply of handshake and wait for confirmation
-
-        handShakeCount = handShakeCount + 1
-        #handShakes[msg[1]] = 1
+        handShakeCount += 1
         print('--- Handshake received: ', msg[1])
 
     print('Secondary Thread: Received all handshakes. Entering the loop to receive messages.')
 
-    stopCount=0 
-    while True:                
-      msgPack = self.sock.recv(4096)   # receive data from client
+    PEERS = getListOfPeers()
+    stopCount = 0
+    while True:
+      msgPack = self.sock.recv(4096)
       msg = pickle.loads(msgPack)
-      if msg[0] == -1:   # count the 'stop' messages from the other processes
-        stopCount = stopCount + 1
+      # Mensagem de parada
+      if msg[0] == -1:
+        stopCount += 1
         if stopCount == N:
-          break  # stop loop when all other processes have finished
-      else:
-        print('Nó ' + str(myself) + 'recebeu:' + str(msg))
+          break
+      # Mensagem de resposta (broadcast)
+      elif len(msg) == 4:
+        print(f'Resposta recebida: {msg}')
+      # Mensagem normal
+      elif len(msg) == 2:
+        print(f'Nó {myself} recebeu mensagem de {msg[0]}: {msg}')
         logList.append(msg)
-        
+        # Envia resposta em broadcast
+        msgs += 1
+        response = (myself, msgs, msg[0], msg[1])
+        responsePack = pickle.dumps(response)
+        for addrToSend in PEERS:
+          sendSocket.sendto(responsePack, (addrToSend, PEER_UDP_PORT))
+      else:
+        print(f'Mensagem desconhecida: {msg}')
+
     # Write log file
     logFile = open('logfile'+str(myself)+'.log', 'w')
     logFile.writelines(str(logList))
@@ -169,12 +179,12 @@ while 1:
   for msgNumber in range(0, nMsgs):
     # Wait some random time between successive messages
     time.sleep(random.randrange(10,100)/1000)
-    payload = "Apenas um teste inicial"
-    msg = (myself, msgNumber, payload)
+    msgs +=1
+    msg = (myself, msgs)
     msgPack = pickle.dumps(msg)
     for addrToSend in PEERS:
       sendSocket.sendto(msgPack, (addrToSend,PEER_UDP_PORT))
-      print('Sent message ' + str(msgNumber))
+      print('Sent message ' + str(msgs))
 
   # Tell all processes that I have no more messages to send
   for addrToSend in PEERS:
