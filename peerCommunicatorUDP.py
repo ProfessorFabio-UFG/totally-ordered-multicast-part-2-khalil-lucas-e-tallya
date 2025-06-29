@@ -160,7 +160,6 @@ while 1:
   print('Handler started')
 
   PEERS = getListOfPeers()
-  PEERS = [peer for peer in PEERS if peer != get_public_ip()]
   
   # Send handshakes
   # To do: Must continue sending until it gets a reply from each process
@@ -174,7 +173,7 @@ while 1:
 
   print('Main Thread: Sent all handshakes. handShakeCount=', str(handShakeCount))
 
-  while (handShakeCount < N-1):
+  while (handShakeCount < N):
     pass  # find a better way to wait for the handshakes
 
   # Send a sequence of data messages to all other processes 
@@ -183,6 +182,8 @@ while 1:
     time.sleep(random.randrange(10,100)/1000)
     msg = (myself, msgs)
     msgPack = pickle.dumps(msg)
+    
+    PEERS = [peer for peer in PEERS if peer != get_public_ip()]
     for addrToSend in PEERS:
       sendSocket.sendto(msgPack, (addrToSend,PEER_UDP_PORT))
       print('Sent message ' + str(msgs))
