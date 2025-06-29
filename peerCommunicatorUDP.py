@@ -136,6 +136,10 @@ class DeliveryThread(threading.Thread):
                         
                         print(f"DeliveryThread: Entregue MSG({delivered_msg_tuple_content[2]}) do Peer {sender_of_data} (ts: {msg_timestamp}). Tamanho do Log: {len(logList)}")
                         delivered_something_in_this_iteration = True
+                        
+                        print(f"DeliveryThread: Enviando resposta da mensagem {original_msg_number} do Peer {sender_of_data} para todos os peers.")
+
+                        
             
             if not delivered_something_in_this_iteration: 
                 time.sleep(0.05)
@@ -227,6 +231,41 @@ class MsgHandler(threading.Thread):
                     print("MsgHandler: Recebido STOP_HANDLER. Terminando.")
                     self.running = False 
                     break
+
+                elif recv_msg_unpickled['type'] == 'DATA_ANS':
+                    data_ts = recv_msg_unpickled['timestamp']
+                    data_sender = recv_msg_unpickled['sender_id']
+                    data_payload = recv_msg_unpickled['payload'] 
+                    
+                    with buffer_lock:
+                        duplicate_index = next((index for index, item in enumerate(message_buffer)
+                            if item[0] == data_ts and item[1] == data_sender), -1)
+                        is_duplicate = duplicate_index != -1
+
+                        if not is_duplicate:
+                            message_buffer.append( (data_ts, data_sender, data_payload, set()) )
+                        elif message_buffer[duplicate_index][2] is None:
+                            current_message = message_buffer[duplicate_index]
+                            new_message = (current_message[0], current_message[1], data_payload, current_message[3])
+                            message_buffer[duplicate_index] = new_message
+                        
+                        print(f"MsgHandler: MENSAGEM RECEBIDA de {data_sender} (payload: {data_payload}, ts: {data_ts})")
+                    
+                    with clock_lock:
+                        lamport_clock += 1
+                        ack_ts = (lamport_clock, myself)
+                    
+                    ack_msg_payload = {
+                        'type': 'ACK',
+                        'original_data_timestamp': data_ts, 
+                        'original_data_sender_id': data_sender,
+                        'timestamp': ack_ts, 
+                        'ack_sender_id': myself 
+                    }
+                    ack_msg_packed = pickle.dumps(ack_msg_payload)
+                    for peer_ip in PEERS_ADDRESSES:
+                        # print(f"Enviando ACK para {peer_ip} referente à mensagem acima")
+                        sendSocket.sendto(ack_msg_packed, (peer_ip, PEER_UDP_PORT))
 
             except timeout: 
                 if not self.running: 
