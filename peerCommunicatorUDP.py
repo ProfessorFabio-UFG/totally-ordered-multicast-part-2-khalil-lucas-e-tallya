@@ -8,6 +8,7 @@ from requests import get # Para obter IP público
 
 # Variáveis Globais para o algoritmo de Lamport
 lamport_clock = 0
+global_msg_counter = 0  # NOVA VARIÁVEL GLOBAL PARA CONTAR TODAS AS MENSAGENS DATA ENVIADAS
 # message_buffer armazena tuplas: 
 # ( (clock_val, sender_id_orig_DATA), 
 #   (payload_sender_id, payload_msg_num), 
@@ -99,7 +100,7 @@ class DeliveryThread(threading.Thread):
         self.running = True
 
     def run(self):
-        global message_buffer, logList, ALL_PEER_IDS
+        global message_buffer, logList, ALL_PEER_IDS, global_msg_counter, lamport_clock, myself, PEERS_ADDRESSES
         print("DeliveryThread: Iniciada")
         while self.running:
             delivered_something_in_this_iteration = False
@@ -107,26 +108,14 @@ class DeliveryThread(threading.Thread):
                 if not message_buffer:
                     pass 
                 else:
-                    # Ordenar o buffer: primeiro por valor do relógio, depois por ID do remetente (para desempate)
                     message_buffer.sort(key=lambda item: (item[0][0], item[0][1]))
-                    
-                    if not message_buffer: # Verificar novamente após ordenação se esvaziou
+                    if not message_buffer:
                         continue
 
-                    # print(f"Current buffer: {message_buffer}")
-
-                    # Verificar se a mensagem no topo da fila pode ser entregue
                     msg_timestamp, msg_original_sender_id, msg_payload_tuple, received_acks = message_buffer[0]
-                    
-                    # Condição de entrega: ACK recebido de todos os N-1 outros peers
                     other_peer_ids_expected_for_ack = set(ALL_PEER_IDS) - {msg_original_sender_id}
-                    # print(f"Received ACKs: {received_acks}")
-                    
-                    # Segunda condição de entrega: o payload da mensagem foi recebido
                     if other_peer_ids_expected_for_ack.issubset(received_acks) and msg_payload_tuple is not None:
                         delivered_msg_tuple_content = message_buffer.pop(0)
-                        # O payload da mensagem é (original_sender_id, message_number)
-                        # No log, armazenamos (sender_id_da_mensagem_DATA, message_number_original)
                         sender_of_data = delivered_msg_tuple_content[1] 
                         original_msg_number = delivered_msg_tuple_content[2][1]
 
@@ -135,6 +124,26 @@ class DeliveryThread(threading.Thread):
                         
                         print(f"DeliveryThread: Entregue MSG({delivered_msg_tuple_content[2]}) do Peer {sender_of_data} (ts: {msg_timestamp}). Tamanho do Log: {len(logList)}")
                         delivered_something_in_this_iteration = True
+
+                        # NOVO: Enviar mensagem DATA de resposta ao entregar
+                        with clock_lock:
+                            lamport_clock += 1
+                            current_ts_tuple = (lamport_clock, myself)
+                        with buffer_lock:
+                            global_msg_counter += 1
+                            response_payload = (myself, global_msg_counter, sender_of_data, original_msg_number)
+                            message_buffer.append( (current_ts_tuple, myself, response_payload, set()) )
+                        data_msg_dict = {
+                            'type': 'DATA',
+                            'sender_id': myself,
+                            'timestamp': current_ts_tuple,
+                            'payload': response_payload
+                        }
+                        data_msg_packed_for_send = pickle.dumps(data_msg_dict)
+                        my_ip = get_my_public_ip()
+                        for peer_ip in PEERS_ADDRESSES:
+                            if peer_ip != my_ip:
+                                sendSocket.sendto(data_msg_packed_for_send, (peer_ip, PEER_UDP_PORT))
             
             if not delivered_something_in_this_iteration: 
                 time.sleep(0.05)
@@ -251,18 +260,21 @@ def send_application_messages(num_messages):
     """
     Envia um número especificado de mensagens DATA para o grupo.
     """
-    global lamport_clock, myself, PEERS_ADDRESSES, message_buffer
+    global lamport_clock, myself, PEERS_ADDRESSES, message_buffer, global_msg_counter
     
     for msg_num in range(num_messages):
         time.sleep(random.randrange(10, 100) / 1000.0) 
         
-        payload_content = (myself, msg_num) 
-        
-        current_ts_tuple = None
         with clock_lock:
             lamport_clock += 1
-            current_ts_tuple = (lamport_clock, myself) 
+            current_ts_tuple = (lamport_clock, myself)
+        with buffer_lock:
+            global_msg_counter += 1
+            payload_content = (myself, global_msg_counter)  # Agora usa o contador global
+            message_buffer.append( (current_ts_tuple, myself, payload_content, set()) )
         
+        print(f"Main: Peer {myself} enviando MSG {msg_num} (payload {payload_content}) com LC_TS {current_ts_tuple}")
+
         data_msg_dict = {
             'type': 'DATA',
             'sender_id': myself, 
@@ -270,11 +282,6 @@ def send_application_messages(num_messages):
             'payload': payload_content 
         }
         data_msg_packed_for_send = pickle.dumps(data_msg_dict)
-
-        with buffer_lock:
-            message_buffer.append( (current_ts_tuple, myself, payload_content, set()) )
-        
-        print(f"Main: Peer {myself} enviando MSG {msg_num} (payload {payload_content}) com LC_TS {current_ts_tuple}")
 
         my_ip = get_my_public_ip()
         for peer_ip in PEERS_ADDRESSES:
