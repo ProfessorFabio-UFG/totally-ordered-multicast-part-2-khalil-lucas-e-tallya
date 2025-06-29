@@ -133,6 +133,7 @@ class MsgHandler(threading.Thread):
                         
                         print(f"MsgHandler: MENSAGEM RECEBIDA de {data_sender} (payload: {data_payload}, ts: {data_ts})")
                     
+                    # Ao enviar ACK:
                     with clock_lock:
                         lamport_clock += 1
                         ack_ts = (lamport_clock, myself)
@@ -147,6 +148,7 @@ class MsgHandler(threading.Thread):
                     for peer_ip in PEERS_ADDRESSES:
                         sendSocket.sendto(ack_msg_packed, (peer_ip, PEER_UDP_PORT))
 
+                    # Ao enviar DATA_ANS:
                     with clock_lock:
                         lamport_clock += 1
                         data_ans_ts = (lamport_clock, myself)
@@ -339,6 +341,7 @@ class MsgHandler(threading.Thread):
                         
                         print(f"MsgHandler: MENSAGEM RECEBIDA de {data_sender} (payload: {data_payload}, ts: {data_ts})")
                     
+                    # Ao enviar ACK:
                     with clock_lock:
                         lamport_clock += 1
                         ack_ts = (lamport_clock, myself)
@@ -353,6 +356,7 @@ class MsgHandler(threading.Thread):
                     for peer_ip in PEERS_ADDRESSES:
                         sendSocket.sendto(ack_msg_packed, (peer_ip, PEER_UDP_PORT))
 
+                    # Ao enviar DATA_ANS:
                     with clock_lock:
                         lamport_clock += 1
                         data_ans_ts = (lamport_clock, myself)
@@ -374,6 +378,11 @@ class MsgHandler(threading.Thread):
                     orig_data_ts = recv_msg_unpickled['original_data_timestamp']
                     ack_sender = recv_msg_unpickled['ack_sender_id']
                     print(f"ACK recebido de {ack_sender} referente à mensagem com relógio {orig_data_ts[0]}")
+                    
+                    # Ao receber ACK:
+                    with clock_lock:
+                        lamport_clock = max(lamport_clock, recv_msg_unpickled['timestamp'][0]) + 1
+                    # Não incremente novamente ao processar o ACK!
                     
                     with buffer_lock:
                         added = False
