@@ -140,6 +140,7 @@ class DeliveryThread(threading.Thread):
                             'payload': response_payload
                         }
                         data_msg_packed_for_send = pickle.dumps(data_msg_dict)
+                        print(f"DeliveryThread: Enviando resposta DATA para {sender_of_data} (payload: {response_payload}) com LC_TS {current_ts_tuple}")
                         my_ip = get_my_public_ip()
                         for peer_ip in PEERS_ADDRESSES:
                             if peer_ip != my_ip:
