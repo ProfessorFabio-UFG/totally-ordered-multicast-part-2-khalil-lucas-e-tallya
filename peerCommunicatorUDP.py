@@ -83,6 +83,7 @@ class MsgHandler(threading.Thread):
     print('Secondary Thread: Received all handshakes. Entering the loop to receive messages.')
 
     PEERS = getListOfPeers()
+    PEERS = [peer for peer in PEERS if peer != get_public_ip()]
     stopCount = 0
     while True:
       msgPack = self.sock.recv(4096)
@@ -159,6 +160,7 @@ while 1:
   print('Handler started')
 
   PEERS = getListOfPeers()
+  PEERS = [peer for peer in PEERS if peer != get_public_ip()]
   
   # Send handshakes
   # To do: Must continue sending until it gets a reply from each process
@@ -179,12 +181,12 @@ while 1:
   for msgNumber in range(0, nMsgs):
     # Wait some random time between successive messages
     time.sleep(random.randrange(10,100)/1000)
-    msgs +=1
     msg = (myself, msgs)
     msgPack = pickle.dumps(msg)
     for addrToSend in PEERS:
       sendSocket.sendto(msgPack, (addrToSend,PEER_UDP_PORT))
       print('Sent message ' + str(msgs))
+    msgs +=1
 
   # Tell all processes that I have no more messages to send
   for addrToSend in PEERS:
