@@ -174,7 +174,7 @@ while 1:
 
   print('Main Thread: Sent all handshakes. handShakeCount=', str(handShakeCount))
 
-  while (handShakeCount < N):
+  while (handShakeCount < N-1):
     pass  # find a better way to wait for the handshakes
 
   # Send a sequence of data messages to all other processes 
