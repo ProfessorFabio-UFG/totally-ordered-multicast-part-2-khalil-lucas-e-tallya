@@ -276,7 +276,7 @@ class MsgHandler(threading.Thread):
                             new_message = (current_message[0], current_message[1], data_payload, current_message[3])
                             message_buffer[duplicate_index] = new_message
                         
-                        print(f"MsgHandler: Mensagem número {data_payload[1]} recebida do Processo {data_sender}, em resposta à mensagem {data_payload[3]} do Processo {data_payload[2]} com TimeStamp {data_ts}")
+                        print(f"MsgHandler: Mensagem número {data_payload[1]} recebida do Processo {data_sender}, em resposta à mensagem {data_payload[3]} do Processo {data_payload[2]} com Time Stamp {data_ts[0]}")
                     
                     with clock_lock:
                         lamport_clock += 1
