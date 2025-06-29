@@ -202,24 +202,6 @@ class MsgHandler(threading.Thread):
                         # print(f"Enviando ACK para {peer_ip} referente à mensagem acima")
                         sendSocket.sendto(ack_msg_packed, (peer_ip, PEER_UDP_PORT))
 
-                    with clock_lock:
-                        lamport_clock += 1
-                        data_ans_ts = (lamport_clock, myself)
-                    # O payload é (índice do nó que enviou a DATA, número da mensagem)
-                    data_ans_payload = (data_sender, data_payload[1])
-                    data_ans_msg = {
-                        'type': 'DATA_ANS',
-                        'sender_id': myself,
-                        'timestamp': data_ans_ts,
-                        'payload': data_ans_payload
-                    }
-                    data_ans_msg_packed = pickle.dumps(data_ans_msg)
-                    my_ip = get_my_public_ip()
-                    for peer_ip in PEERS_ADDRESSES:
-                        if peer_ip != my_ip:
-                            sendSocket.sendto(data_ans_msg_packed, (peer_ip, PEER_UDP_PORT))
-                
-
                 elif recv_msg_unpickled['type'] == 'ACK':
                     orig_data_ts = recv_msg_unpickled['original_data_timestamp']
                     orig_data_sender = recv_msg_unpickled['original_data_sender_id']
@@ -239,43 +221,6 @@ class MsgHandler(threading.Thread):
                             ack_set = set()
                             ack_set.add(ack_sender)
                             message_buffer.append( (orig_data_ts, orig_data_sender, None, ack_set) )
-                
-                elif recv_msg_unpickled['type'] == 'DATA_ANS':
-                    data_ans_ts = recv_msg_unpickled['timestamp']
-                    data_ans_sender = recv_msg_unpickled['sender_id']
-                    data_ans_payload = recv_msg_unpickled['payload']
-
-                    with buffer_lock:
-                        duplicate_index = next((index for index, item in enumerate(message_buffer)
-                            if item[0] == data_ans_ts and item[1] == data_ans_sender), -1)
-                        is_duplicate = duplicate_index != -1
-
-                        if not is_duplicate:
-                            message_buffer.append( (data_ans_ts, data_ans_sender, data_ans_payload, set()) )
-                        elif message_buffer[duplicate_index][2] is None:
-                            current_message = message_buffer[duplicate_index]
-                            new_message = (current_message[0], current_message[1], data_ans_payload, current_message[3])
-                            message_buffer[duplicate_index] = new_message
-
-                        print(f"MsgHandler: DATA_ANS RECEBIDA de {data_ans_sender} (payload: {data_ans_payload}, ts: {data_ans_ts})")
-
-                    # Envia ACK para todos os peers (exceto para si mesmo)
-                    with clock_lock:
-                        lamport_clock += 1
-                        ack_ts = (lamport_clock, myself)
-
-                    ack_msg_payload = {
-                        'type': 'ACK',
-                        'original_data_timestamp': data_ans_ts,
-                        'original_data_sender_id': data_ans_sender,
-                        'timestamp': ack_ts,
-                        'ack_sender_id': myself
-                    }
-                    ack_msg_packed = pickle.dumps(ack_msg_payload)
-                    my_ip = get_my_public_ip()
-                    for peer_ip in PEERS_ADDRESSES:
-                        if peer_ip != my_ip:
-                            sendSocket.sendto(ack_msg_packed, (peer_ip, PEER_UDP_PORT))
                 
                 elif recv_msg_unpickled['type'] == 'STOP_HANDLER': 
                     print("MsgHandler: Recebido STOP_HANDLER. Terminando.")
