@@ -125,26 +125,27 @@ class DeliveryThread(threading.Thread):
                         print(f"DeliveryThread: Entregue MSG({delivered_msg_tuple_content[2]}) do Peer {sender_of_data} (ts: {msg_timestamp}). Tamanho do Log: {len(logList)}")
                         delivered_something_in_this_iteration = True
 
-                        # NOVO: Enviar mensagem DATA de resposta ao entregar
-                        with clock_lock:
-                            lamport_clock += 1
-                            current_ts_tuple = (lamport_clock, myself)
-                        with buffer_lock:
-                            global_msg_counter += 1
-                            response_payload = (myself, global_msg_counter, sender_of_data, original_msg_number)
-                            message_buffer.append( (current_ts_tuple, myself, response_payload, set()) )
-                        data_msg_dict = {
-                            'type': 'DATA',
-                            'sender_id': myself,
-                            'timestamp': current_ts_tuple,
-                            'payload': response_payload
-                        }
-                        data_msg_packed_for_send = pickle.dumps(data_msg_dict)
-                        print(f"DeliveryThread: Enviando resposta DATA para {sender_of_data} (payload: {response_payload}) com LC_TS {current_ts_tuple}")
-                        my_ip = get_my_public_ip()
-                        for peer_ip in PEERS_ADDRESSES:
-                            if peer_ip != my_ip:
-                                sendSocket.sendto(data_msg_packed_for_send, (peer_ip, PEER_UDP_PORT))
+                        # Só responde se for mensagem original (payload com 2 elementos)
+                        if isinstance(delivered_msg_tuple_content[2], tuple) and len(delivered_msg_tuple_content[2]) == 2:
+                            with clock_lock:
+                                lamport_clock += 1
+                                current_ts_tuple = (lamport_clock, myself)
+                            with buffer_lock:
+                                global_msg_counter += 1
+                                response_payload = (myself, global_msg_counter, sender_of_data, original_msg_number)
+                                message_buffer.append( (current_ts_tuple, myself, response_payload, set()) )
+                            data_msg_dict = {
+                                'type': 'DATA',
+                                'sender_id': myself,
+                                'timestamp': current_ts_tuple,
+                                'payload': response_payload
+                            }
+                            data_msg_packed_for_send = pickle.dumps(data_msg_dict)
+                            print(f"DeliveryThread: Enviando resposta DATA para {sender_of_data} (payload: {response_payload}) com LC_TS {current_ts_tuple}")
+                            my_ip = get_my_public_ip()
+                            for peer_ip in PEERS_ADDRESSES:
+                                if peer_ip != my_ip:
+                                    sendSocket.sendto(data_msg_packed_for_send, (peer_ip, PEER_UDP_PORT))
             
             if not delivered_something_in_this_iteration: 
                 time.sleep(0.05)
