@@ -83,7 +83,6 @@ class MsgHandler(threading.Thread):
     print('Secondary Thread: Received all handshakes. Entering the loop to receive messages.')
 
     PEERS = getListOfPeers()
-    PEERS = [peer for peer in PEERS if peer != get_public_ip()]
     stopCount = 0
     while True:
       msgPack = self.sock.recv(4096)
@@ -97,7 +96,7 @@ class MsgHandler(threading.Thread):
       elif len(msg) == 4:
         print(f'Resposta recebida: {msg}')
       # Mensagem normal
-      elif len(msg) == 2:
+      elif len(msg) == 2 and msg[0] != myself:
         print(f'Nó {myself} recebeu mensagem de {msg[0]}: {msg}')
         logList.append(msg)
         # Envia resposta em broadcast
@@ -183,7 +182,6 @@ while 1:
     msg = (myself, msgs)
     msgPack = pickle.dumps(msg)
     
-    PEERS = [peer for peer in PEERS if peer != get_public_ip()]
     for addrToSend in PEERS:
       sendSocket.sendto(msgPack, (addrToSend,PEER_UDP_PORT))
       print('Sent message ' + str(msgs))
